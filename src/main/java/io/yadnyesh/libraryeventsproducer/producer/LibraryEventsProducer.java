@@ -28,7 +28,7 @@ public class LibraryEventsProducer {
 		listenableFuture.addCallback(new ListenableFutureCallback<SendResult<Integer, String>>() {
 			@Override
 			public void onFailure(Throwable e) {
-				handleFailure(key, value, e);
+				handleFailure(e);
 			}
 			
 			@Override
@@ -38,7 +38,7 @@ public class LibraryEventsProducer {
 		});
 	}
 	
-	private void handleFailure(Integer key, String value, Throwable e) {
+	private void handleFailure(Throwable e) {
 		log.error("Error Sending message and the exception is {}", e.getMessage());
 		try {
 			throw e;
