@@ -40,6 +40,24 @@ public class LibraryEventsProducer {
 		});
 	}
 	
+	public void sendLibraryEventSpecifyTopicName(LibraryEvent libraryEvent) throws JsonProcessingException {
+		Integer key = libraryEvent.getLibraryEventId();
+		String value = objectMapper.writeValueAsString(libraryEvent);
+		ListenableFuture<SendResult<Integer, String>> listenableFuture = kafkaTemplate.send("library-events", key, value);
+		listenableFuture.addCallback(new ListenableFutureCallback<SendResult<Integer, String>>() {
+			@Override
+			public void onFailure(Throwable e) {
+				handleFailure(e);
+			}
+			
+			@Override
+			public void onSuccess(SendResult<Integer, String> result) {
+				handleSuccess(key, value, result);
+			}
+		});
+	}
+	
+	
 	public SendResult sendLibraryEventSynchronous(LibraryEvent libraryEvent) throws JsonProcessingException, ExecutionException, InterruptedException {
 		Integer key = libraryEvent.getLibraryEventId();
 		String value = objectMapper.writeValueAsString(libraryEvent);
