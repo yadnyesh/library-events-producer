@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.yadnyesh.libraryeventsproducer.domain.LibraryEvent;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
@@ -22,6 +23,8 @@ public class LibraryEventsProducer {
 	
 	@Autowired
 	ObjectMapper objectMapper;
+	
+	String topic = "library-events";
 	
 	public void sendLibraryEvent(LibraryEvent libraryEvent) throws JsonProcessingException {
 		Integer key = libraryEvent.getLibraryEventId();
@@ -43,7 +46,8 @@ public class LibraryEventsProducer {
 	public void sendLibraryEventSpecifyTopicName(LibraryEvent libraryEvent) throws JsonProcessingException {
 		Integer key = libraryEvent.getLibraryEventId();
 		String value = objectMapper.writeValueAsString(libraryEvent);
-		ListenableFuture<SendResult<Integer, String>> listenableFuture = kafkaTemplate.send("library-events", key, value);
+		ProducerRecord<Integer, String> producerRecord = buildProducerRecord(key, value, topic);
+		ListenableFuture<SendResult<Integer, String>> listenableFuture = kafkaTemplate.send(producerRecord);
 		listenableFuture.addCallback(new ListenableFutureCallback<SendResult<Integer, String>>() {
 			@Override
 			public void onFailure(Throwable e) {
@@ -57,6 +61,9 @@ public class LibraryEventsProducer {
 		});
 	}
 	
+	private ProducerRecord<Integer, String> buildProducerRecord(Integer key, String value, String topic) {
+		return new ProducerRecord<>(topic, null, key, value, null);
+	}
 	
 	public SendResult sendLibraryEventSynchronous(LibraryEvent libraryEvent) throws JsonProcessingException, ExecutionException, InterruptedException {
 		Integer key = libraryEvent.getLibraryEventId();
