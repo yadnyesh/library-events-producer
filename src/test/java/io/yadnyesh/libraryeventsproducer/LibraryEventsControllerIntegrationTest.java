@@ -9,6 +9,7 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -54,6 +55,7 @@ public class LibraryEventsControllerIntegrationTest {
 	}
 	
 	@Test
+	@Timeout(5)
 	void postLibraryEvent() {
 		
 		Book book = Book.builder()
@@ -81,5 +83,37 @@ public class LibraryEventsControllerIntegrationTest {
 		String expectedRecord = "{\"libraryEventId\":null,\"book\":{\"bookId\":123,\"bookName\":\"Kafka using Spring Boot\",\"bookAuthor\":\"Dilip\"},\"libraryEventType\":\"NEW\"}";
 		String value = consumerRecord.value();
 		assertEquals(expectedRecord, value);
+	}
+	
+	@Test
+	@Timeout(5)
+	void putLibraryEvent() throws InterruptedException {
+		//given
+		Book book = Book.builder()
+				.bookId(456)
+				.bookAuthor("Dilip")
+				.bookName("Kafka using Spring Boot")
+				.build();
+		
+		LibraryEvent libraryEvent = LibraryEvent.builder()
+				.libraryEventId(123)
+				.book(book)
+				.build();
+		HttpHeaders headers = new HttpHeaders();
+		headers.set("content-type", MediaType.APPLICATION_JSON.toString());
+		HttpEntity<LibraryEvent> request = new HttpEntity<>(libraryEvent, headers);
+		
+		//when
+		ResponseEntity<LibraryEvent> responseEntity = restTemplate.exchange("/v1/libraryevent", HttpMethod.PUT, request, LibraryEvent.class);
+		
+		//then
+		assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+		
+		ConsumerRecord<Integer, String> consumerRecord = KafkaTestUtils.getSingleRecord(consumer, "library-events");
+		//Thread.sleep(3000);
+		String expectedRecord = "{\"libraryEventId\":123,\"book\":{\"bookId\":456,\"bookName\":\"Kafka using Spring Boot\",\"bookAuthor\":\"Dilip\"},\"libraryEventType\":\"UPDATE\"}";
+		String value = consumerRecord.value();
+		assertEquals(expectedRecord, value);
+		
 	}
 }
