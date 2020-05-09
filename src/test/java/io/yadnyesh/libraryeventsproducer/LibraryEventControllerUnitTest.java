@@ -74,7 +74,7 @@ public class LibraryEventControllerUnitTest {
 		
 		
 		String json = objectMapper.writeValueAsString(libraryEvent);
-		doNothing().when(libraryEventProducer).sendLibraryEvent(isA(LibraryEvent.class));
+		when(libraryEventProducer.sendLibraryEventSpecifyTopicName(isA(LibraryEvent.class))).thenReturn(null);
 		
 		String expectedErrorMessage = "book.bookAuthor - must not be blank, book.bookId - must not be null";
 		
